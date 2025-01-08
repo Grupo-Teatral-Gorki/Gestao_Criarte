@@ -1,0 +1,11 @@
+.projects-table{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color:white;
+    padding: 10px;
+    border-radius: 5px;
+    color: #1d4a5d;
+    min-width: 95%;
+}
+

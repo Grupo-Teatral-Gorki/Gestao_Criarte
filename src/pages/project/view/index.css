@@ -1,0 +1,56 @@
+.project-card{
+    background-color: white;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.project-title, .proponentes-card-title, .content-card-title{
+    background-color: #1d4a5d;
+}
+
+.project-title-data{
+    padding: 10px;
+}
+
+.project-title p, .proponentes-card-title p, .content-card-title p{
+    max-width: 130px;
+    font-size: 10px;
+    color: white;
+    padding: 5px;
+    font-weight: bold;
+}
+
+.project-proponentes{
+    background-color: white;
+    margin-top: 20px;
+    max-width: 95%;
+    border-radius: 5px;
+    margin-left: auto;
+    margin-right: auto; 
+}
+
+.project-content{
+    background-color: white;
+    margin-top: 20px;
+    max-width: 95%;
+    border-radius: 5px;
+    margin-left: auto;
+    margin-right: auto; 
+}
+
+.shad-table{
+    font-size: 10px;
+}
+
+.content-box{
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+Textarea{
+    height: 200px;
+}
+
+
+

@@ -1,0 +1,29 @@
+.filters{
+    background-color: white;
+    color: #1d4a5d;
+    border-color: #1d4a5d;
+    margin-top: 20px;
+    margin-left: 2.5%;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.filters Button{
+    color: #1d4a5d;
+
+}
+
+.header-buttons{
+    background-color: white;
+    border-color: #1d4a5d;
+    margin-right: 2.5%;
+    margin-top: 20px;
+    border-radius: 10px;
+    align-items: center;
+    padding: 5px;
+}
+.header-projects-count{
+    margin-top: 20px;
+    align-items: center;
+    padding: 1px;
+}
