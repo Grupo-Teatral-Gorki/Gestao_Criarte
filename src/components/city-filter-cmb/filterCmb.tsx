@@ -46,7 +46,11 @@ const city = [
   {
     id: "3398",
     city: "Cerquilho",
-  }
+  },
+  {
+    id: "3716",
+    city: "Pontal",
+  },
 ];
 
 export default function CityFilter() {
@@ -90,7 +94,9 @@ export default function CityFilter() {
                         setLocalCity(currentValue);
                         router.reload();
                       } catch (error) {
-                        alert(`Não foi possível selecionar sua região: ${error}`);
+                        alert(
+                          `Não foi possível selecionar sua região: ${error}`
+                        );
                       }
                     }}
                   >
