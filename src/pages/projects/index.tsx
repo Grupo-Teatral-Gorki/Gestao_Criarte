@@ -1,12 +1,11 @@
 "use client";
 import Header from "@/components/ui/header/header";
-import { useRouter } from 'next/router';
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import "./index.css";
 import { ProjectsTable } from "@/components/projects-table/table";
 import CityFilter from "@/components/city-filter-cmb/filterCmb";
-
 
 interface StatusCount {
   rascunho: number | null;
@@ -16,13 +15,16 @@ interface StatusCount {
 }
 
 const fetchData = async (idCidade: string): Promise<StatusCount> => {
-  const response = await fetch(`https://gorki-painel-admin-api.iglgxt.easypanel.host/projects/status-overview`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ idCidade }),
-  });
+  const response = await fetch(
+    `https://gorki-painel-admin-api.iglgxt.easypanel.host/projects/status-overview`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ idCidade }),
+    }
+  );
   if (!response.ok) {
     throw new Error("Erro ao buscar dados da API");
   }
@@ -68,7 +70,7 @@ export default function View() {
         <div style={{ display: "flex" }} className="filters">
           <Button
             onClick={() => {
-              router.push('/dash');
+              router.push("/dash");
             }}
             variant="outline"
             style={{ marginRight: "5px", color: "#1d4a5d" }}
@@ -79,59 +81,179 @@ export default function View() {
         </div>
 
         {/* Contador de Projetos */}
-        <div className="header-projects-count" style={{ display: "flex", gap: "20px", marginLeft: "20px" }}>
-          <div style={{ backgroundColor: 'white', padding: '5px', borderRadius: '5px 0px 0px 5px', marginRight: '-18px', minWidth: '100px' }} className="data-count-project">
+        <div
+          className="header-projects-count"
+          style={{ display: "flex", gap: "20px", marginLeft: "20px" }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "5px",
+              borderRadius: "5px 0px 0px 5px",
+              marginRight: "-18px",
+              minWidth: "100px",
+            }}
+            className="data-count-project"
+          >
             <div>
-              <span style={{ display: "flex", color: "#1d4a5d", fontSize: "10px", fontWeight: "bold", justifyContent: 'center' }}>
-                <img style={{ marginRight: "5px", width: "14px", height: "14px" }} src="https://img.icons8.com/?size=100&id=uvB5FAw8S1Yt&format=png&color=000000" alt="Rascunho" />{" "}
+              <span
+                style={{
+                  display: "flex",
+                  color: "#1d4a5d",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  style={{ marginRight: "5px", width: "14px", height: "14px" }}
+                  src="https://img.icons8.com/?size=100&id=uvB5FAw8S1Yt&format=png&color=000000"
+                  alt="Rascunho"
+                />{" "}
                 Rascunhos
               </span>
             </div>
-            <div style={{ display: "flex", justifyContent: "center", color: "#1d4a5d", fontWeight: "bold" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                color: "#1d4a5d",
+                fontWeight: "bold",
+              }}
+            >
               <span style={{ fontSize: "1em" }}>
-                {statusCount.rascunho !== null ? statusCount.rascunho : "Carregando..."}
+                {statusCount.rascunho !== null
+                  ? statusCount.rascunho
+                  : "Carregando..."}
               </span>
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'white', padding: '5px', marginRight: '-18px', minWidth: '100px' }} className="data-count-project">
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "5px",
+              marginRight: "-18px",
+              minWidth: "100px",
+            }}
+            className="data-count-project"
+          >
             <div>
-              <span style={{ display: "flex", color: "#1d4a5d", fontSize: "10px", fontWeight: "bold", justifyContent: 'center' }}>
-                <img style={{ marginRight: "5px", width: "14px", height: "14px" }} src="https://img.icons8.com/pulsar-gradient/48/file-arrow.png" alt="Enviado" />{" "}
+              <span
+                style={{
+                  display: "flex",
+                  color: "#1d4a5d",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  style={{ marginRight: "5px", width: "14px", height: "14px" }}
+                  src="https://img.icons8.com/pulsar-gradient/48/file-arrow.png"
+                  alt="Enviado"
+                />{" "}
                 Enviados
               </span>
             </div>
-            <div style={{ display: "flex", justifyContent: "center", color: "#1d4a5d", fontWeight: "bold" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                color: "#1d4a5d",
+                fontWeight: "bold",
+              }}
+            >
               <span style={{ fontSize: "1em" }}>
-                {statusCount.enviado !== null ? statusCount.enviado : "Carregando..."}
+                {statusCount.enviado !== null
+                  ? statusCount.enviado
+                  : "Carregando..."}
               </span>
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'white', padding: '5px', marginRight: '-18px', minWidth: '100px' }} className="data-count-project">
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "5px",
+              marginRight: "-18px",
+              minWidth: "100px",
+            }}
+            className="data-count-project"
+          >
             <div>
-              <span style={{ display: "flex", color: "#1d4a5d", fontSize: "10px", fontWeight: "bold", justifyContent: 'center' }}>
-                <img style={{ marginRight: "5px", width: "14px", height: "14px" }} src="https://img.icons8.com/pulsar-gradient/48/documents.png" alt="Enviado" />{" "}
+              <span
+                style={{
+                  display: "flex",
+                  color: "#1d4a5d",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  style={{ marginRight: "5px", width: "14px", height: "14px" }}
+                  src="https://img.icons8.com/pulsar-gradient/48/documents.png"
+                  alt="Enviado"
+                />{" "}
                 Habilitação
               </span>
             </div>
-            <div style={{ display: "flex", justifyContent: "center", color: "#1d4a5d", fontWeight: "bold" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                color: "#1d4a5d",
+                fontWeight: "bold",
+              }}
+            >
               <span style={{ fontSize: "1em" }}>
-                {statusCount.habilitacao !== null ? statusCount.habilitacao : "Carregando..."}
+                {statusCount.habilitacao !== null
+                  ? statusCount.habilitacao
+                  : "Carregando..."}
               </span>
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'white', padding: '5px', borderRadius: '0px 5px 5px 0px', minWidth: '100px' }} className="data-count-project">
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "5px",
+              borderRadius: "0px 5px 5px 0px",
+              minWidth: "100px",
+            }}
+            className="data-count-project"
+          >
             <div>
-              <span style={{ display: "flex", color: "#1d4a5d", fontSize: "10px", justifyContent: 'center', fontWeight: "bold" }}>
-                <img style={{ marginRight: "5px", width: "14px", height: "14px" }} src="https://img.icons8.com/pulsar-gradient/48/high-priority.png" alt="Recurso" />{" "}
+              <span
+                style={{
+                  display: "flex",
+                  color: "#1d4a5d",
+                  fontSize: "10px",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                <img
+                  style={{ marginRight: "5px", width: "14px", height: "14px" }}
+                  src="https://img.icons8.com/pulsar-gradient/48/high-priority.png"
+                  alt="Recurso"
+                />{" "}
                 Recurso
               </span>
             </div>
-            <div style={{ display: "flex", justifyContent: "center", color: "#1d4a5d", fontWeight: "bold" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                color: "#1d4a5d",
+                fontWeight: "bold",
+              }}
+            >
               <span style={{ fontSize: "1em" }}>
-                {statusCount.recurso !== null ? statusCount.recurso : "Carregando..."}
+                {statusCount.recurso !== null
+                  ? statusCount.recurso
+                  : "Carregando..."}
               </span>
             </div>
           </div>
@@ -150,14 +272,27 @@ export default function View() {
             style={{
               color: "black",
               backgroundColor: "white",
-              cursor: "not-allowed"
+              cursor: "not-allowed",
             }}
           >
             Baixar Dados
           </Button>
           <Button
             variant="outline"
-            style={{ backgroundColor: "#b82c2c", color: "white",               cursor: "not-allowed"
+            style={{
+              color: "black",
+              backgroundColor: "white",
+              cursor: "not-allowed",
+            }}
+          >
+            Gerar Lista
+          </Button>
+          <Button
+            variant="outline"
+            style={{
+              backgroundColor: "#b82c2c",
+              color: "white",
+              cursor: "not-allowed",
             }}
           >
             Reportar Problema
@@ -172,4 +307,3 @@ export default function View() {
     </div>
   );
 }
-  

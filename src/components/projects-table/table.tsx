@@ -135,7 +135,7 @@ const fetchData = async (idCidade: string): Promise<Project[]> => {
     throw new Error("Erro ao buscar dados da API");
   }
   const data = await response.json();
-  const formattedData = await removeDuplicatesWithAPI(responseMock);
+  const formattedData = await removeDuplicatesWithAPI(data);
   return formattedData; // Retorna os últimos 10 projetos
 };
 
