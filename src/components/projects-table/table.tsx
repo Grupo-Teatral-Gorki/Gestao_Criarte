@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import "./table.css";
 import React, { useState, useEffect } from "react";
@@ -49,19 +51,92 @@ interface Project {
   id_usuario: number | null;
 }
 
-const fetchData = async (idCidade: string): Promise<Project[]> => {
-  const response = await fetch(`https://gorki-painel-admin-api.iglgxt.easypanel.host/projects/ovw`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ idCidade }),
+async function removeDuplicatesWithAPI(projects: Project[]) {
+  const seen = new Set();
+  const duplicates = new Map();
+
+  // First pass: Identify duplicates
+  projects.forEach((project) => {
+    if (seen.has(project.id_projeto)) {
+      duplicates.set(project.id_projeto, null);
+    } else {
+      seen.add(project.id_projeto);
+    }
   });
+
+  // Fetch selected proponents for duplicated ids
+  for (const id_projeto of duplicates.keys()) {
+    try {
+      const response = await fetch(
+        "https://gorki-painel-admin-api.iglgxt.easypanel.host/project/view",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idProjeto: id_projeto }),
+        }
+      );
+
+      const data = await response.json();
+
+      // Find the proponent with is_selected === true
+      const selectedProponent = data.proponentes.find(
+        (p: any) => p.is_selected
+      );
+      if (selectedProponent) {
+        duplicates.set(id_projeto, selectedProponent.nome_proponente);
+      }
+    } catch (error) {
+      console.error(`Error fetching project ${id_projeto}:`, error);
+    }
+  }
+
+  // Second pass: Build the final list
+  const finalProjects = [];
+  const added = new Set();
+
+  for (const project of projects) {
+    if (!added.has(project.id_projeto)) {
+      added.add(project.id_projeto);
+
+      if (
+        duplicates.has(project.id_projeto) &&
+        duplicates.get(project.id_projeto)
+      ) {
+        // If a selected proponent was found via API, use it
+        finalProjects.push({
+          id_projeto: project.id_projeto,
+          nome_proponente: duplicates.get(project.id_projeto),
+          status: project.status,
+          tipo_edital: project.tipo_edital,
+          id_usuario: project.id_usuario,
+        });
+      } else {
+        // Otherwise, use the first occurrence
+        finalProjects.push(project);
+      }
+    }
+  }
+
+  return finalProjects;
+}
+
+const fetchData = async (idCidade: string): Promise<Project[]> => {
+  const response = await fetch(
+    `https://gorki-painel-admin-api.iglgxt.easypanel.host/projects/ovw`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ idCidade }),
+    }
+  );
   if (!response.ok) {
     throw new Error("Erro ao buscar dados da API");
   }
   const data = await response.json();
-  return data // Retorna os últimos 10 projetos
+  const formattedData = await removeDuplicatesWithAPI(responseMock);
+  return formattedData; // Retorna os últimos 10 projetos
 };
 
 const columns: ColumnDef<Project>[] = [
@@ -124,7 +199,15 @@ const columns: ColumnDef<Project>[] = [
     cell: ({ row }) => {
       const tipo = row.getValue("tipo_edital");
       const label =
-        tipo === 1 ? "Fomento" : tipo === 2 ? "Premiação" : tipo === 4 ? "Subsídio" :  tipo === 3 ? "Áreas Perifericas" : "Desconhecido"
+        tipo === 1
+          ? "Fomento"
+          : tipo === 2
+          ? "Premiação"
+          : tipo === 4
+          ? "Subsídio"
+          : tipo === 3
+          ? "Áreas Perifericas"
+          : "Desconhecido";
 
       return (
         <p
@@ -161,17 +244,15 @@ const columns: ColumnDef<Project>[] = [
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-  style={{ cursor: "pointer" }}
-  onClick={() => {
-    const projetoId = row.getValue("id_projeto") as string; // Ou 'as number', dependendo do tipo esperado
-    localStorage.setItem("projetoId", projetoId);
-    router.push(`/project/view`);
-  }}
->
-  Visualizar
-</DropdownMenuItem>
-
-
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              const projetoId = row.getValue("id_projeto") as string; // Ou 'as number', dependendo do tipo esperado
+              localStorage.setItem("projetoId", projetoId);
+              router.push(`/project/view`);
+            }}
+          >
+            Visualizar
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
@@ -328,7 +409,7 @@ export function ProjectsTable() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="rounded-md border">
+        <div className="border rounded-md">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -373,7 +454,7 @@ export function ProjectsTable() {
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex items-center justify-end py-4 space-x-2">
           <Button
             variant="outline"
             size="sm"
@@ -389,3 +470,658 @@ export function ProjectsTable() {
     </div>
   );
 }
+
+const responseMock = [
+  {
+    id_projeto: 2257,
+    status: "enviado",
+    nome_proponente: "ANA CLAUDIA CARDOSO BIZARRI",
+    tipo_edital: 1,
+    id_usuario: 320,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2261,
+    status: "rascunho",
+    nome_proponente: "Proponente Teste",
+    tipo_edital: 1,
+    id_usuario: 321,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2268,
+    status: "rascunho",
+    nome_proponente: "MARCOS ANTONIO TEMPONI",
+    tipo_edital: 1,
+    id_usuario: 323,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2270,
+    status: "enviado",
+    nome_proponente: "ANA CLAUDIA CARDOSO BIZARRI",
+    tipo_edital: 1,
+    id_usuario: 320,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2272,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2273,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2278,
+    status: "rascunho",
+    nome_proponente: "Associação Unidos da Terceira Idade",
+    tipo_edital: 1,
+    id_usuario: 327,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2283,
+    status: "rascunho",
+    nome_proponente: "Associação Unidos da Terceira Idade",
+    tipo_edital: 1,
+    id_usuario: 327,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2284,
+    status: "enviado",
+    nome_proponente: "Fernando Donizete Genari",
+    tipo_edital: 1,
+    id_usuario: 325,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2287,
+    status: "enviado",
+    nome_proponente: "Carlos Frinka Neto",
+    tipo_edital: 1,
+    id_usuario: 333,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2291,
+    status: "enviado",
+    nome_proponente: "Damiani Raqueli Soares Pereira",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2291,
+    status: "enviado",
+    nome_proponente:
+      "Damiani Raqueli Soares Pereira 40049511866 ( Núcleo de Dança Damiani Raqueli)",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2292,
+    status: "enviado",
+    nome_proponente: "Damiani Raqueli Soares Pereira",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2292,
+    status: "enviado",
+    nome_proponente:
+      "Damiani Raqueli Soares Pereira 40049511866 ( Núcleo de Dança Damiani Raqueli)",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2300,
+    status: "rascunho",
+    nome_proponente: "CRISTIANE SILVA DOS SANTOS",
+    tipo_edital: 1,
+    id_usuario: 332,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2302,
+    status: "rascunho",
+    nome_proponente: "Centro Educacional Maria Mãe de Todos",
+    tipo_edital: 1,
+    id_usuario: 340,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2304,
+    status: "rascunho",
+    nome_proponente: "Josué da Silva Lima ",
+    tipo_edital: 1,
+    id_usuario: 341,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2311,
+    status: "rascunho",
+    nome_proponente: "Ana Claudia Cardoso Bizarri",
+    tipo_edital: 1,
+    id_usuario: 334,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2311,
+    status: "rascunho",
+    nome_proponente: "INSTITUTO VIVENCIAR AMAP",
+    tipo_edital: 1,
+    id_usuario: 334,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2316,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2316,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2316,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2317,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2317,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2317,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2319,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2319,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2319,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2321,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2321,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2321,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2323,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2323,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2323,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2325,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2325,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2325,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2339,
+    status: "enviado",
+    nome_proponente: "Carlos Frinka Neto",
+    tipo_edital: 1,
+    id_usuario: 333,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2342,
+    status: "enviado",
+    nome_proponente: "Wesley Cesar Santos Gonçalves",
+    tipo_edital: 1,
+    id_usuario: 342,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2345,
+    status: "enviado",
+    nome_proponente: "Emerson Arantes Cardoso Junior",
+    tipo_edital: 1,
+    id_usuario: 344,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2353,
+    status: "rascunho",
+    nome_proponente: "MARCOS ANTONIO TEMPONI",
+    tipo_edital: 1,
+    id_usuario: 323,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2354,
+    status: "enviado",
+    nome_proponente: "Claudiano Rangel de Souza",
+    tipo_edital: 1,
+    id_usuario: 345,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2357,
+    status: "enviado",
+    nome_proponente: "Jobert Pablo Tiago",
+    tipo_edital: 1,
+    id_usuario: 346,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2363,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2366,
+    status: "enviado",
+    nome_proponente: "Emerson Arantes Cardoso Junior",
+    tipo_edital: 1,
+    id_usuario: 344,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2368,
+    status: "enviado",
+    nome_proponente: "Damiani Raqueli Soares Pereira",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2368,
+    status: "enviado",
+    nome_proponente:
+      "Damiani Raqueli Soares Pereira 40049511866 ( Núcleo de Dança Damiani Raqueli)",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2369,
+    status: "enviado",
+    nome_proponente: "Damiani Raqueli Soares Pereira",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2369,
+    status: "enviado",
+    nome_proponente:
+      "Damiani Raqueli Soares Pereira 40049511866 ( Núcleo de Dança Damiani Raqueli)",
+    tipo_edital: 1,
+    id_usuario: 329,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2371,
+    status: "enviado",
+    nome_proponente: "Fernanda Araújo dos Santos",
+    tipo_edital: 1,
+    id_usuario: 347,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2372,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2373,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2379,
+    status: "rascunho",
+    nome_proponente: "Carlos Frinka Neto",
+    tipo_edital: 1,
+    id_usuario: 333,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2402,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2403,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2404,
+    status: "enviado",
+    nome_proponente: "Cristiane Patrícia Cardoso Barato ",
+    tipo_edital: 1,
+    id_usuario: 348,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2406,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2406,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2406,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2411,
+    status: "enviado",
+    nome_proponente: "Claudiano Rangel de Souza",
+    tipo_edital: 1,
+    id_usuario: 345,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2414,
+    status: "enviado",
+    nome_proponente: "Fernando Donizete Genari",
+    tipo_edital: 1,
+    id_usuario: 325,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2415,
+    status: "enviado",
+    nome_proponente: "Claudiano Rangel de Souza",
+    tipo_edital: 1,
+    id_usuario: 345,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2417,
+    status: "enviado",
+    nome_proponente: "Instituto vivenciar Amap",
+    tipo_edital: 1,
+    id_usuario: 349,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2418,
+    status: "enviado",
+    nome_proponente: "Fernando Donizete Genari",
+    tipo_edital: 1,
+    id_usuario: 325,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2437,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2437,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2437,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2443,
+    status: "enviado",
+    nome_proponente: "Nemuel Kesler Candido Silva",
+    tipo_edital: 1,
+    id_usuario: 331,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2444,
+    status: "enviado",
+    nome_proponente: "claudiano rangel de souza",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2444,
+    status: "enviado",
+    nome_proponente: "Luana Silva Carneiro",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2444,
+    status: "enviado",
+    nome_proponente: "maraisa fernanda menegon anjos",
+    tipo_edital: 1,
+    id_usuario: 339,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2448,
+    status: "enviado",
+    nome_proponente: "Nemuel Kesler Candido Silva",
+    tipo_edital: 1,
+    id_usuario: 331,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2452,
+    status: "enviado",
+    nome_proponente: "Nemuel Kesler Candido Silva",
+    tipo_edital: 1,
+    id_usuario: 331,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2459,
+    status: "rascunho",
+    nome_proponente: "Cristiane Patrícia Cardoso Barato ",
+    tipo_edital: 1,
+    id_usuario: 348,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2460,
+    status: "enviado",
+    nome_proponente: "Cristiane Patrícia Cardoso Barato ",
+    tipo_edital: 1,
+    id_usuario: 348,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2462,
+    status: "enviado",
+    nome_proponente: "Instituto vivenciar Amap",
+    tipo_edital: 1,
+    id_usuario: 349,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2470,
+    status: "enviado",
+    nome_proponente: "Ana Carolina Porto",
+    tipo_edital: 1,
+    id_usuario: 351,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2474,
+    status: "rascunho",
+    nome_proponente: "Tárley Pereira Lima",
+    tipo_edital: 1,
+    id_usuario: 324,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2476,
+    status: "enviado",
+    nome_proponente: "Alexandre Trindade de Almeida",
+    tipo_edital: 1,
+    id_usuario: 337,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2478,
+    status: "enviado",
+    nome_proponente: "Ana Carolina Porto",
+    tipo_edital: 1,
+    id_usuario: 351,
+    id_cidade: 3716,
+  },
+  {
+    id_projeto: 2494,
+    status: "enviado",
+    nome_proponente: "Laudemires Figueredo dos Santos ",
+    tipo_edital: 1,
+    id_usuario: 353,
+    id_cidade: 3716,
+  },
+];
