@@ -2,11 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['styxx-public.s3.sa-east-1.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**", // Permite imagens de qualquer domínio
+      },
+    ],
   },
   eslint: {
-    ignoreDuringBuilds: true,  // Ignora os warnings do ESLint durante o build
-  }
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;

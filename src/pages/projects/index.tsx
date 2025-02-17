@@ -6,6 +6,9 @@ import React, { useEffect, useState } from "react";
 import "./index.css";
 import { ProjectsTable } from "@/components/projects-table/table";
 import CityFilter from "@/components/city-filter-cmb/filterCmb";
+import Modal from "@/components/modal";
+import CustomInput from "@/components/customInput";
+import { fetchProjetosLista } from "@/utils/fetchForList";
 
 interface StatusCount {
   rascunho: number | null;
@@ -39,6 +42,8 @@ export default function View() {
     recurso: null,
     habilitacao: null,
   });
+  const [isOpen, setIsOpen] = useState(false);
+  const [text, setText] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -62,6 +67,16 @@ export default function View() {
   }, []);
 
   const router = useRouter();
+
+  // fazer o redirecionamento para a página de pdfTable
+
+  const handleGenerateList = () => {
+    const projetos = JSON.parse(localStorage.getItem("projetos") || "[]");
+    if (projetos) {
+      fetchProjetosLista(projetos);
+      localStorage.setItem("textoDoPDF", text);
+    } else alert("sem projetos");
+  };
 
   return (
     <div>
@@ -272,7 +287,6 @@ export default function View() {
             style={{
               color: "black",
               backgroundColor: "white",
-              cursor: "not-allowed",
             }}
           >
             Baixar Dados
@@ -282,8 +296,8 @@ export default function View() {
             style={{
               color: "black",
               backgroundColor: "white",
-              cursor: "not-allowed",
             }}
+            onClick={() => setIsOpen(true)}
           >
             Gerar Lista
           </Button>
@@ -292,7 +306,6 @@ export default function View() {
             style={{
               backgroundColor: "#b82c2c",
               color: "white",
-              cursor: "not-allowed",
             }}
           >
             Reportar Problema
@@ -304,6 +317,27 @@ export default function View() {
       <div style={{ marginTop: "20px" }}>
         <ProjectsTable />
       </div>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        <h2 className="text-xl font-bold">Gerar Lista de Inscritos</h2>
+        <CustomInput
+          label="Insira o texto que irá no topo do documento"
+          value={text}
+          onChange={setText}
+        />
+        <div className="flex justify-end">
+          <Button
+            style={{
+              backgroundColor: "#1d4a5d",
+              color: "white",
+            }}
+            onClick={() => {
+              handleGenerateList();
+            }}
+          >
+            Gerar Lista
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -88,6 +88,7 @@ export default function CityFilter() {
                     value={framework.id}
                     style={{ cursor: "pointer" }}
                     onSelect={(currentValue: string) => {
+                      console.log("idCidade", currentValue);
                       setValue(currentValue === value ? "" : currentValue);
                       setOpen(false);
                       try {

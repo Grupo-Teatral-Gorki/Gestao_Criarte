@@ -42,82 +42,11 @@ import {
 } from "@/components/ui/tooltip";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import router from "next/router";
+import { Project as OriginalProject } from "@/pages/pdftable";
+import { ProjetoOverview } from "@/utils/fetchForList";
 
-interface Project {
-  id_projeto: number;
-  status: string | null;
-  nome_proponente: string | null;
-  tipo_edital: number | null;
-  id_usuario: number | null;
-}
-
-async function removeDuplicatesWithAPI(projects: Project[]) {
-  const seen = new Set();
-  const duplicates = new Map();
-
-  // First pass: Identify duplicates
-  projects.forEach((project) => {
-    if (seen.has(project.id_projeto)) {
-      duplicates.set(project.id_projeto, null);
-    } else {
-      seen.add(project.id_projeto);
-    }
-  });
-
-  // Fetch selected proponents for duplicated ids
-  for (const id_projeto of duplicates.keys()) {
-    try {
-      const response = await fetch(
-        "https://gorki-painel-admin-api.iglgxt.easypanel.host/project/view",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idProjeto: id_projeto }),
-        }
-      );
-
-      const data = await response.json();
-
-      // Find the proponent with is_selected === true
-      const selectedProponent = data.proponentes.find(
-        (p: any) => p.is_selected
-      );
-      if (selectedProponent) {
-        duplicates.set(id_projeto, selectedProponent.nome_proponente);
-      }
-    } catch (error) {
-      console.error(`Error fetching project ${id_projeto}:`, error);
-    }
-  }
-
-  // Second pass: Build the final list
-  const finalProjects = [];
-  const added = new Set();
-
-  for (const project of projects) {
-    if (!added.has(project.id_projeto)) {
-      added.add(project.id_projeto);
-
-      if (
-        duplicates.has(project.id_projeto) &&
-        duplicates.get(project.id_projeto)
-      ) {
-        // If a selected proponent was found via API, use it
-        finalProjects.push({
-          id_projeto: project.id_projeto,
-          nome_proponente: duplicates.get(project.id_projeto),
-          status: project.status,
-          tipo_edital: project.tipo_edital,
-          id_usuario: project.id_usuario,
-        });
-      } else {
-        // Otherwise, use the first occurrence
-        finalProjects.push(project);
-      }
-    }
-  }
-
-  return finalProjects;
+interface Project extends OriginalProject {
+  status: "rascunho" | "enviado" | "Recurso" | "Habilitação";
 }
 
 const fetchData = async (idCidade: string): Promise<Project[]> => {
@@ -135,8 +64,8 @@ const fetchData = async (idCidade: string): Promise<Project[]> => {
     throw new Error("Erro ao buscar dados da API");
   }
   const data = await response.json();
-  const formattedData = await removeDuplicatesWithAPI(data);
-  return formattedData; // Retorna os últimos 10 projetos
+  localStorage.setItem("projetos", JSON.stringify(data));
+  return data; // Retorna os últimos 10 projetos
 };
 
 const columns: ColumnDef<Project>[] = [
@@ -304,6 +233,7 @@ export function ProjectsTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [listData, setListData] = useState<ProjetoOverview[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -315,6 +245,7 @@ export function ProjectsTable() {
 
       try {
         const data = await fetchData(idCidade);
+        setListData(data);
         setProjects(data);
 
         // Contar os projetos por status
