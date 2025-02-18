@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Header from "@/components/ui/header/header";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import "./index.css";
+import JSZip from "jszip";
 import { ProjectsTable } from "@/components/projects-table/table";
 import CityFilter from "@/components/city-filter-cmb/filterCmb";
 import Modal from "@/components/modal";
@@ -44,6 +46,7 @@ export default function View() {
   });
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState("");
+  const [urlLogo, setUrlLogo] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -76,6 +79,57 @@ export default function View() {
       fetchProjetosLista(projetos);
       localStorage.setItem("textoDoPDF", text);
     } else alert("sem projetos");
+  };
+
+  const extractUniqueProjetoIds = (dataArray: any) => {
+    const idsSet = new Set();
+    dataArray.forEach((item: any) => {
+      if (item.id_projeto) {
+        idsSet.add(item.id_projeto);
+      }
+    });
+    return Array.from(idsSet);
+  };
+
+  const handleDownload = async (dataArray: any) => {
+    const idCidade = localStorage.getItem("idCidade");
+    if (!Array.isArray(dataArray) || dataArray.length === 0) {
+      console.error("Lista de projetos inválida ou vazia");
+      return;
+    }
+
+    const ids = extractUniqueProjetoIds(dataArray);
+    const zip = new JSZip();
+
+    try {
+      for (const id of ids) {
+        try {
+          const response = await fetch(
+            `https://gorki-aws-acess-api.iglgxt.easypanel.host/download-zip/${id}/${idCidade}`
+          );
+          if (!response.ok) {
+            console.warn(`Erro ao baixar arquivos para ID: ${id}, pulando...`);
+            continue;
+          }
+          const blob = await response.blob();
+          zip.file(`id-${id}.zip`, blob);
+        } catch (error) {
+          console.warn(`Erro ao processar ID: ${id}, pulando...`, error);
+        }
+      }
+
+      // Gerar o zip final
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = window.URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `projetos.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (error) {
+      console.error("Erro ao compactar os arquivos:", error);
+    }
   };
 
   return (
@@ -288,6 +342,11 @@ export default function View() {
               color: "black",
               backgroundColor: "white",
             }}
+            onClick={() => {
+              handleDownload(
+                JSON.parse(localStorage.getItem("projetos") || "[]")
+              );
+            }}
           >
             Baixar Dados
           </Button>
@@ -323,6 +382,11 @@ export default function View() {
           label="Insira o texto que irá no topo do documento"
           value={text}
           onChange={setText}
+        />
+        <CustomInput
+          label="link para o logo da prefeitura"
+          value={urlLogo}
+          onChange={setUrlLogo}
         />
         <div className="flex justify-end">
           <Button
