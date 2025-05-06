@@ -51,6 +51,10 @@ const city = [
     id: "3716",
     city: "Pontal",
   },
+  {
+    id: "3391",
+    city: "Casa Branca",
+  },
 ];
 
 export default function CityFilter() {
